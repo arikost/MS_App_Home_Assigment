@@ -1,16 +1,19 @@
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {useDispatch, useSelector} from 'react-redux';
-import {getPhotos} from './src/store/action/actionCreator'
+import {getPagination, getPhotos, setCategory} from './src/store/action/actionCreator'
 import {
   FlatList,
   Image,
+  ListRenderItem,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { RootState } from './src/store/reducers';
+import { Categories, PaginationState } from './src/store/action/actionInterface';
 
 export type ElementProps = {
   id: number,
@@ -34,50 +37,234 @@ export type ElementProps = {
   comments: number,
   user_id: number,
   user: string,
-  userImageURL: string
+  userImageURL: string,
 } 
-
 
 const App = () => {
   
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
   const newData = useSelector(
-    ({photoReducer}: RootState) => photoReducer.data
-  )
-  const [data, setData] = useState<ElementProps[]>(newData)
-  
-  useEffect(() => {
-    dispatch(getPhotos())
-  },[])
-  console.log(data)
-  const keyExtractor = useCallback((item:ElementProps) => item.id.toString(), []);
-  return (
-
-
-<View style={styles.container}>
-  
-      <FlatList 
-        data={data}
-        renderItem={({item}) => (
-          
-            <Text style={styles.test}>{item.id}</Text>
-            //<Image source={{uri : item.previewURL}} style={{height:100, width:100}}/>
-          
-        )}
-        keyExtractor={keyExtractor}
-      />
-      </View>
+    ({photoReducer}: RootState) => photoReducer.currentDate
   );
+  const [data, setData] = useState<ElementProps[]>();
+  const [modalElementValues, setModalElementValues] = useState<ElementProps>();
+  const [modalElementState, seModalElementState] = useState(false);
+  const [modalCategoriesState, setModalCategoriesState] = useState(false);
+
+  console.log('App render')
+  useEffect(() => {
+    console.log('App mount')
+    dispatch(getPhotos())    
+  },[])
+  useMemo(() =>{
+    console.log('newData')
+    setData(newData)
+  },[newData])
+
+  const keyExtractor = useCallback((item:ElementProps) => item.id.toString(), []);
+  const modalElement = useCallback((item: ElementProps) => {
+    setModalElementValues(item);
+    seModalElementState(true)
+  },[])
+  const RenderElement: ListRenderItem<ElementProps> = useCallback(({item}) =>{
+    
+    return(
+    <TouchableOpacity 
+      style={styles.itemContainer}
+      onPress={() => modalElement(item)}
+      >
+      <Image source={{uri : item.previewURL}} style={styles.imageStyle}/>
+    </TouchableOpacity>
+    )
+  },[])
+  const paginationForward = useCallback(() =>{
+    dispatch(getPagination('forward'))
+  },[])
+  const paginationBackward = useCallback(() =>{
+    dispatch(getPagination('backward'))
+  },[])
+  const closeModal = useCallback((modal: 'element' | 'category') =>{
+    if(modal === 'element'){
+      seModalElementState(false);
+    }
+    else if(modal === 'category'){
+      setModalCategoriesState(false)
+    }
+  },[])
+  const choseNewCategory = useCallback((category:Categories) => {
+    dispatch(setCategory(category));
+    dispatch(getPhotos());
+    closeModal('category');
+  },[])
+  const ElementModal = useCallback(() =>{
+    return(
+      <Modal
+      animationType='slide'
+      transparent={true}
+      visible={modalElementState}
+      >
+        <TouchableOpacity 
+          style={styles.modalBackground}
+          onPress={() => closeModal('element')}
+        ></TouchableOpacity>
+        <View style={styles.moduleViewBackground}>
+          <View style={styles.modalView}>
+            <Text style={styles.textStyle}>views : {modalElementValues?.views}</Text>
+            <Text style={styles.textStyle}>downloads : {modalElementValues?.downloads}</Text>
+            <Text style={styles.textStyle}>likes : {modalElementValues?.likes}</Text>
+            <Text style={styles.textStyle}>collections : {modalElementValues?.collections}</Text>
+            <Text style={styles.textStyle}>tags : {modalElementValues?.tags}</Text>
+            <Text style={styles.textStyle}>user : {modalElementValues?.user}</Text>
+          </View>
+        </View>
+      </Modal>
+
+    )
+  },[modalElementState])
+  const CategoriesModal = useCallback(() =>{
+    return(
+      <Modal
+      animationType='slide'
+      transparent={true}
+      visible={modalCategoriesState}
+      >
+        <TouchableOpacity 
+          style={styles.modalBackground}
+          onPress={() => closeModal('category')}
+        ></TouchableOpacity>
+        <View style={styles.moduleViewBackground}>
+          <View style={styles.modalView}>
+            <TouchableOpacity 
+              style={styles.btnStyleCategory}
+              onPress={() => choseNewCategory('animal')}
+            >
+              <Text style={styles.textStyle}>animal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.btnStyleCategory}
+              onPress={() => choseNewCategory('sport')}
+            >
+              <Text style={styles.textStyle}>sport</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.btnStyleCategory}
+              onPress={() => choseNewCategory('work')}
+            >
+              <Text style={styles.textStyle}>work</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+    )
+  },[modalCategoriesState])
+
+  return (
+    <View style={styles.container}>
+        <View style={styles.itemContainer}>
+          <TouchableOpacity 
+            onPress={paginationForward}
+            style={styles.btnStyleTop}
+          >
+            <Text style={styles.textStyle}> NEXT </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => setModalCategoriesState(true)}
+            style={styles.btnStyleTop}
+          >
+            <Text style={styles.textStyle}>SELECT CATEGORY</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={paginationBackward}
+            style={styles.btnStyleTop}
+          >
+            <Text style={styles.textStyle}> PREV </Text>
+          </TouchableOpacity>
+        </View>
+        <FlatList 
+            data={data}
+            renderItem={RenderElement}
+            keyExtractor={keyExtractor}
+            maxToRenderPerBatch={9}
+        />
+        <ElementModal/>
+        <CategoriesModal/>
+      </View>
+        
+      );
 }
 
 const styles = StyleSheet.create({
   container : {
     flex:1,
   },
-  test: {
-    alignSelf: 'center',
-    justifyContent:'center',
+  itemContainer: {
+    flexDirection: 'row',
+    justifyContent:'space-evenly',
+    alignItems: 'baseline',
     margin:5
+  },
+  imageStyle : {
+    height:180, 
+    width:180
+  },
+  modalView : {
+    margin:5,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  moduleViewBackground : {
+    bottom: 0,
+    backgroundColor: 'black',
+    opacity: 0.7
+
+  },
+  modalBackground : {
+    flex:1,
+    backgroundColor: 'black',
+    opacity: 0.7
+  },
+  textStyle :{
+    color: 'black',
+    fontWeight: '700'
+  },
+  btnStyleTop : {
+    alignContent:'center',
+    alignItems:'center',
+    padding: 5,
+    margin:5,
+    alignSelf: 'center',
+    width: 'auto',
+    height: 30,
+    elevation:5,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    borderRadius: 20,
+    backgroundColor: '#9CE3F9'
+  },
+  btnStyleCategory : {
+    alignContent:'center',
+    alignItems:'center',
+    padding: 5,
+    margin:5,
+    alignSelf: 'center',
+    width: 100,
+    height: 30,
+    elevation:5,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    borderRadius: 20,
+    backgroundColor: '#9CE3F9'
   }
 });
 
