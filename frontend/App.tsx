@@ -161,7 +161,7 @@ const App = () => {
 
   return (
     <View style={styles.container}>
-        <View style={styles.itemContainer}>
+        <View style={styles.btnContainer}>
           <TouchableOpacity 
             onPress={paginationForward}
             style={styles.btnStyleTop}
@@ -180,12 +180,14 @@ const App = () => {
           >
             <Text style={styles.textStyle}> PREV </Text>
           </TouchableOpacity>
-        </View>
+        </View>   
         <FlatList 
             data={data}
             renderItem={RenderElement}
             keyExtractor={keyExtractor}
             maxToRenderPerBatch={9}
+            numColumns={3}
+          contentContainerStyle={styles.itemContainer}
         />
         <ElementModal/>
         <CategoriesModal/>
@@ -198,15 +200,20 @@ const styles = StyleSheet.create({
   container : {
     flex:1,
   },
-  itemContainer: {
+  btnContainer: {
     flexDirection: 'row',
     justifyContent:'space-evenly',
     alignItems: 'baseline',
     margin:5
   },
+  itemContainer : {
+    alignItems: 'center',
+
+    padding : 6
+  },
   imageStyle : {
-    height:180, 
-    width:180
+    height:110, 
+    width:110
   },
   modalView : {
     margin:5,
