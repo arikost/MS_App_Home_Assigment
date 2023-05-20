@@ -24,8 +24,9 @@ export default produce((state: PhotosState, action: PhotoReducerActionType) =>{
             return state;
         case SET_PHOTOS:
             state.allData = action.payload ;
-            state.currentDate = [...state.allData.slice(state.index,9)];
             state.index = 0;
+            state.currentDate = [...state.allData.slice(state.index,9)];
+           
             return state;
         case GET_PAGINATION:
             if(state.allData){
