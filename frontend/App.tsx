@@ -14,6 +14,10 @@ import {
 } from 'react-native';
 import { RootState } from './src/store/reducers';
 import { Categories, PaginationState } from './src/store/action/actionInterface';
+import {Dimensions} from 'react-native';
+
+const width = Dimensions.get('window').width;
+const height = Dimensions.get('window').height;
 
 export type ElementProps = {
   id: number,
@@ -67,13 +71,13 @@ const App = () => {
     seModalElementState(true)
   },[])
   const RenderElement: ListRenderItem<ElementProps> = useCallback(({item}) =>{
-    
+    const img_uri = {uri : item.previewURL}
     return(
     <TouchableOpacity 
       style={styles.itemContainer}
       onPress={() => modalElement(item)}
       >
-      <Image source={{uri : item.previewURL}} style={styles.imageStyle}/>
+      <Image source={img_uri} style={styles.imageStyle}/>
     </TouchableOpacity>
     )
   },[])
@@ -97,6 +101,7 @@ const App = () => {
     closeModal('category');
   },[])
   const ElementModal = useCallback(() =>{
+    const img_uri = {uri: modalElementValues?.largeImageURL};
     return(
       <Modal
       animationType='slide'
@@ -106,8 +111,11 @@ const App = () => {
         <TouchableOpacity 
           style={styles.modalBackground}
           onPress={() => closeModal('element')}
-        ></TouchableOpacity>
-        <View style={styles.moduleViewBackground}>
+        >
+          <Image source={img_uri} style={styles.largeImgStyle}/>
+        
+        
+        
           <View style={styles.modalView}>
             <Text style={styles.textStyle}>views : {modalElementValues?.views}</Text>
             <Text style={styles.textStyle}>downloads : {modalElementValues?.downloads}</Text>
@@ -116,7 +124,8 @@ const App = () => {
             <Text style={styles.textStyle}>tags : {modalElementValues?.tags}</Text>
             <Text style={styles.textStyle}>user : {modalElementValues?.user}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
+        
       </Modal>
 
     )
@@ -131,8 +140,8 @@ const App = () => {
         <TouchableOpacity 
           style={styles.modalBackground}
           onPress={() => closeModal('category')}
-        ></TouchableOpacity>
-        <View style={styles.moduleViewBackground}>
+        >
+        
           <View style={styles.modalView}>
             <TouchableOpacity 
               style={styles.btnStyleCategory}
@@ -153,7 +162,7 @@ const App = () => {
               <Text style={styles.textStyle}>work</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
 
     )
@@ -163,11 +172,12 @@ const App = () => {
     <View style={styles.container}>
         <View style={styles.btnContainer}>
           <TouchableOpacity 
-            onPress={paginationForward}
+            onPress={paginationBackward}
             style={styles.btnStyleTop}
           >
-            <Text style={styles.textStyle}> NEXT </Text>
+            <Text style={styles.textStyle}> PREV </Text>
           </TouchableOpacity>
+
           <TouchableOpacity 
             onPress={() => setModalCategoriesState(true)}
             style={styles.btnStyleTop}
@@ -175,10 +185,10 @@ const App = () => {
             <Text style={styles.textStyle}>SELECT CATEGORY</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            onPress={paginationBackward}
+            onPress={paginationForward}
             style={styles.btnStyleTop}
           >
-            <Text style={styles.textStyle}> PREV </Text>
+            <Text style={styles.textStyle}> NEXT </Text>
           </TouchableOpacity>
         </View>   
         <FlatList 
@@ -204,7 +214,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent:'space-evenly',
     alignItems: 'baseline',
-    margin:5
+    margin:30
   },
   itemContainer : {
     alignItems: 'center',
@@ -215,8 +225,14 @@ const styles = StyleSheet.create({
     height:110, 
     width:110
   },
+  largeImgStyle : {
+    height:height/2, 
+    width:width - 10,
+    alignSelf:'center',
+    marginTop : 100
+  },
   modalView : {
-    margin:5,
+    marginTop:60,
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 35,
@@ -230,16 +246,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  moduleViewBackground : {
-    bottom: 0,
-    backgroundColor: 'black',
-    opacity: 0.7
-
-  },
   modalBackground : {
     flex:1,
     backgroundColor: 'black',
-    opacity: 0.7
+    opacity: 0.8
+    
   },
   textStyle :{
     color: 'black',
